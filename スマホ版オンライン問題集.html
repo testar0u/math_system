@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>線形代数 演習（モバイル最適化版）</title>
+    <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      options: { enableMenu: false } // モバイルでの誤作動防止
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #005bac;
+            --success: #28a745;
+            --error: #dc3545;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+            padding-bottom: 40px;
+        }
+
+        /* ヘッダー（タイマー） */
+        #timer-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding-top: env(safe-area-inset-top); /* iPhoneのノッチ対応 */
+        }
+        #seek-bar-container { width: 100%; height: 6px; background: #eee; }
+        #seek-bar { width: 100%; height: 100%; background: var(--success); transition: width 1s linear; }
+        #timer-text { text-align: center; font-weight: bold; font-size: 0.9rem; padding: 8px 0; color: #555; }
+
+        .container { padding: 16px; margin-top: 10px; }
+        #timer-header[style*="display: block"] + .container { margin-top: 60px; }
+
+        /* モード切替 */
+        .mode-selection {
+            display: flex;
+            background: #e4e6eb;
+            padding: 4px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-mode {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .btn-mode.active { background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: var(--primary); }
+
+        /* セクション選択 */
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-section {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        /* 問題カード */
+        .problem-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .problem-header {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        /* 数式のスクロール対応（スマホで式がはみ出さないように） */
+        .mjx-container {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            padding: 5px 0;
+        }
+
+        /* ボタン類 */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:active { opacity: 0.7; transform: scale(0.98); }
+        .btn-show { background: #f0f7ff; color: var(--primary); margin-top: 15px; border: 1px solid var(--primary); }
+        
+        .eval-buttons { display: none; gap: 10px; margin-top: 15px; }
+        .btn-eval { flex: 1; color: white; height: 55px; }
+        .btn-correct { background: var(--success); }
+        .btn-incorrect { background: var(--error); }
+
+        .answer-area {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary);
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .result-board {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            border: 2px solid var(--primary);
+            margin-top: 20px;
+        }
+        .result-score { font-size: 2rem; font-weight: bold; color: var(--primary); margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <div id="timer-header">
+        <div id="seek-bar-container"><div id="seek-bar"></div></div>
+        <div id="timer-text">残り時間: 15:00</div>
+    </div>
+
+    <div class="container">
+        <div class="mode-selection">
+            <button id="mode-free" class="btn-mode active" onclick="setMode('free')">フリー演習</button>
+            <button id="mode-test" class="btn-mode" onclick="setMode('test')">自習テスト</button>
+        </div>
+
+        <div id="menu-area">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.1rem;">学習する節を選択</h3>
+            <div id="section-buttons" class="section-grid"></div>
+        </div>
+
+        <div id="quiz-area"></div>
+    </div>
+
+<script>
+const allQuestions = [
+  { "section": 1, "id": "q1", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix} \\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix} $$<br><strong>解説:</strong> 単位行列との積は元の行列と変わらない。" },
+  { "section": 1, "id": "q2", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 1 & -1 \\\\ 2 & 0 \\end{pmatrix} \\begin{pmatrix} 3 & 1 \\\\ -1 & 2 \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} 4 & -1 \\\\ 6 & 2 \\end{pmatrix} $$<br><strong>解説:</strong> 行と列の内積をそれぞれ計算する。" },
+  { "section": 1, "id": "q3", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix} \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} c & d \\\\ a & b \\end{pmatrix} $$<br><strong>解説:</strong> 左からこの行列を掛けると、行が入れ替わる。" },
+  { "section": 1, "id": "q4", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 2 & 0 \\\\ 0 & 3 \\end{pmatrix} \\begin{pmatrix} 1 & 4 \\\\ 5 & 2 \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} 2 & 8 \\\\ 15 & 6 \\end{pmatrix} $$<br><strong>解説:</strong> 各行が定数倍される。" },
+  { "section": 1, "id": "q5", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix} \\begin{pmatrix} 0 & 0 \\\\ 0 & 0 \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} 0 & 0 \\\\ 0 & 0 \\end{pmatrix} $$<br><strong>解説:</strong> 零行列との積。" },
+  { "section": 1, "id": "q6", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix} \\begin{pmatrix} 1 & -1 \\\\ -1 & 1 \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} 0 & 0 \\\\ 0 & 0 \\end{pmatrix} $$<br><strong>解説:</strong> 零因子の例。" },
+  { "section": 1, "id": "q7", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 2 & 1 \\\\ -1 & 3 \\end{pmatrix} \\begin{pmatrix} 3 & -1 \\\\ 1 & 2 \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} 7 & 0 \\\\ 0 & 7 \\end{pmatrix} $$<br><strong>解説:</strong> スカラー行列。" },
+  { "section": 1, "id": "q8", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} \\cos\\theta & -\\sin\\theta \\\\ \\sin\\theta & \\cos\\theta \\end{pmatrix} \\begin{pmatrix} \\cos\\phi & -\\sin\\phi \\\\ \\sin\\phi & \\cos\\phi \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} \\cos(\\theta+\\phi) & -\\sin(\\theta+\\phi) \\\\ \\sin(\\theta+\\phi) & \\cos(\\theta+\\phi) \\end{pmatrix} $$<br><strong>解説:</strong> 回転行列の積。" },
+  { "section": 1, "id": "q9", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 1 & a \\\\ 0 & 1 \\end{pmatrix} \\begin{pmatrix} 1 & b \\\\ 0 & 1 \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} 1 & a+b \\\\ 0 & 1 \\end{pmatrix} $$<br><strong>解説:</strong> 上三角行列。" },
+  { "section": 1, "id": "q10", "question_html": "次の行列の積を計算せよ。<br>$$ \\begin{pmatrix} 3 & 2 \\\\ 1 & 1 \\end{pmatrix} \\begin{pmatrix} 1 & -2 \\\\ -1 & 3 \\end{pmatrix} $$", "answer_html": "<strong>解答:</strong> $$ \\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix} $$<br><strong>解説:</strong> 逆行列。" }
+];
+
+let currentMode = 'free';
+let timerInterval = null;
+let timeRemaining = 900;
+const TEST_TIME_LIMIT = 900;
+const TEST_QUESTION_COUNT = 5;
+
+let currentTotalQuestions = 0; 
+let answeredCount = 0;         
+let correctCount = 0;          
+
+window.onload = renderSectionButtons;
+
+function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('mode-free').classList.toggle('active', mode === 'free');
+    document.getElementById('mode-test').classList.toggle('active', mode === 'test');
+    resetSystem();
+}
+
+function resetSystem() {
+    clearInterval(timerInterval);
+    document.getElementById('timer-header').style.display = 'none';
+    document.getElementById('quiz-area').innerHTML = '';
+    document.getElementById('menu-area').style.display = 'block';
+}
+
+function renderSectionButtons() {
+    const sections = [...new Set(allQuestions.map(q => q.section))];
+    const container = document.getElementById('section-buttons');
+    sections.forEach(sec => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-section';
+        btn.innerText = `第${sec}節`;
+        btn.onclick = () => loadQuiz(sec);
+        container.appendChild(btn);
+    });
+}
+
+function loadQuiz(sectionNumber) {
+    document.getElementById('menu-area').style.display = 'none';
+    const targetQuestions = allQuestions.filter(q => q.section === sectionNumber);
+    const shuffled = targetQuestions.sort(() => 0.5 - Math.random());
+    const count = (currentMode === 'test') ? TEST_QUESTION_COUNT : 3;
+    const selected = shuffled.slice(0, count);
+    
+    currentTotalQuestions = selected.length;
+    answeredCount = 0;
+    correctCount = 0;
+    
+    if (currentMode === 'test') startTimer();
+
+    const quizArea = document.getElementById('quiz-area');
+    quizArea.innerHTML = `<div style="margin-bottom:15px; font-weight:bold; color:var(--primary)">${currentMode === 'test' ? '自習テスト' : 'フリー演習'}：第${sectionNumber}節</div>`;
+
+    selected.forEach((q, index) => {
+        quizArea.innerHTML += `
+            <div class="problem-card" id="card-${index}">
+                <div class="problem-header">PROBLEM ${index + 1}</div>
+                <div class="question-text">${q.question_html}</div>
+                <button class="btn btn-show" id="btn-show-${index}" onclick="showAnswer(${index})">解答を表示して採点</button>
+                <div class="answer-area" id="ans-area-${index}">${q.answer_html}</div>
+                <div class="eval-buttons" id="eval-area-${index}">
+                    <button class="btn btn-eval btn-incorrect" onclick="recordResult(${index}, false)">✕ 不正解</button>
+                    <button class="btn btn-eval btn-correct" onclick="recordResult(${index}, true)">◯ 正解</button>
+                </div>
+            </div>
+        `;
+    });
+
+    quizArea.innerHTML += `
+        <div id="final-result" class="result-board">
+            <div id="result-msg"></div>
+            <div class="result-score" id="result-score"></div>
+            <button class="btn btn-show" onclick="resetSystem()">メニューに戻る</button>
+        </div>`;
+    
+    if (window.MathJax) MathJax.typesetPromise();
+}
+
+function startTimer() {
+    timeRemaining = TEST_TIME_LIMIT;
+    document.getElementById('timer-header').style.display = 'block';
+    updateTimerUI();
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerUI();
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            finishQuiz("時間切れです！");
+        }
+    }, 1000);
+}
+
+function updateTimerUI() {
+    const min = Math.floor(timeRemaining / 60);
+    const sec = timeRemaining % 60;
+    document.getElementById('timer-text').innerText = `残り時間: ${min}:${sec < 10 ? '0' : ''}${sec}`;
+    const percent = (timeRemaining / TEST_TIME_LIMIT) * 100;
+    document.getElementById('seek-bar').style.width = percent + "%";
+    document.getElementById('seek-bar').style.background = timeRemaining < 60 ? "var(--error)" : "var(--success)";
+}
+
+function showAnswer(index) {
+    document.getElementById(`btn-show-${index}`).style.display = 'none';
+    document.getElementById(`ans-area-${index}`).style.display = 'block';
+    document.getElementById(`eval-area-${index}`).style.display = 'flex';
+    // スムーズに解答へスクロール
+    document.getElementById(`ans-area-${index}`).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function recordResult(index, isCorrect) {
+    const evalArea = document.getElementById(`eval-area-${index}`);
+    evalArea.innerHTML = isCorrect 
+        ? '<div style="width:100%; text-align:center; color:var(--success); font-weight:bold; padding:10px;">✅ 正解として記録しました</div>' 
+        : '<div style="width:100%; text-align:center; color:var(--error); font-weight:bold; padding:10px;">❌ 不正解として記録しました</div>';
+    
+    if (isCorrect) correctCount++;
+    answeredCount++;
+    if (answeredCount === currentTotalQuestions) {
+        clearInterval(timerInterval);
+        finishQuiz("全問回答完了！");
+    }
+}
+
+function finishQuiz(message) {
+    const resultBoard = document.getElementById('final-result');
+    document.getElementById('result-msg').innerText = message;
+    document.getElementById('result-score').innerText = `${correctCount} / ${currentTotalQuestions}`;
+    resultBoard.style.display = 'block';
+    resultBoard.scrollIntoView({ behavior: 'smooth' });
+    
+    const showButtons = document.querySelectorAll('.btn-show');
+    showButtons.forEach(btn => { if(btn.innerText.includes("採点")) btn.disabled = true; });
+    document.getElementById('timer-text').innerText = "テスト終了";
+    document.getElementById('seek-bar').style.background = "#6c757d";
+}
+</script>
+</body>
+</html>

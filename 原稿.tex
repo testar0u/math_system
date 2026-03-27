@@ -1,0 +1,79 @@
+\documentclass[a4paper,dvipdfmx]{jsarticle}
+\usepackage[top=15mm, bottom=15mm, left=15mm, right=15mm]{geometry}
+\usepackage{amsmath, amssymb}
+
+\begin{document}
+
+\section{行列の計算}
+
+\textbf{問題1}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} $$
+解説: 単位行列との積は、元の行列と変わらない。
+
+\textbf{問題2}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 1 & -1 \\ 2 & 0 \end{pmatrix} \begin{pmatrix} 3 & 1 \\ -1 & 2 \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} 4 & -1 \\ 6 & 2 \end{pmatrix} $$
+解説: 行と列の内積をそれぞれ計算する。
+
+\textbf{問題3}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix} \begin{pmatrix} a & b \\ c & d \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} c & d \\ a & b \end{pmatrix} $$
+解説: 左からこの行列を掛けると、行が入れ替わる。
+
+\textbf{問題4}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 2 & 0 \\ 0 & 3 \end{pmatrix} \begin{pmatrix} 1 & 4 \\ 5 & 2 \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} 2 & 8 \\ 15 & 6 \end{pmatrix} $$
+解説: 左から対角行列を掛けると、各行が定数倍される。
+
+\textbf{問題5}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} \begin{pmatrix} 0 & 0 \\ 0 & 0 \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} 0 & 0 \\ 0 & 0 \end{pmatrix} $$
+解説: 零行列との積は常に零行列になる。
+
+\textbf{問題6}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix} \begin{pmatrix} 1 & -1 \\ -1 & 1 \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} 0 & 0 \\ 0 & 0 \end{pmatrix} $$
+解説: 零因子（積が零行列になる非零行列のペア）の例である。
+
+\textbf{問題7}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 2 & 1 \\ -1 & 3 \end{pmatrix} \begin{pmatrix} 3 & -1 \\ 1 & 2 \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} 7 & 0 \\ 0 & 7 \end{pmatrix} $$
+解説: 計算結果がスカラー行列になるケース。
+
+\textbf{問題8}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix} \begin{pmatrix} \cos\phi & -\sin\phi \\ \sin\phi & \cos\phi \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} \cos(\theta+\phi) & -\sin(\theta+\phi) \\ \sin(\theta+\phi) & \cos(\theta+\phi) \end{pmatrix} $$
+解説: 回転行列の積は、角度の和の回転行列となる。加法定理を用いる。
+
+\textbf{問題9}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 1 & a \\ 0 & 1 \end{pmatrix} \begin{pmatrix} 1 & b \\ 0 & 1 \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} 1 & a+b \\ 0 & 1 \end{pmatrix} $$
+解説: 上三角行列の性質。成分の和になることを確認する。
+
+\textbf{問題10}\\
+次の行列の積を計算せよ。
+$$ \begin{pmatrix} 3 & 2 \\ 1 & 1 \end{pmatrix} \begin{pmatrix} 1 & -2 \\ -1 & 3 \end{pmatrix} $$
+\textbf{解答・解説}\\
+解答: $$ \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix} $$
+解説: 互いに逆行列の関係にあるため、積は単位行列となる。
+
+\end{document}
